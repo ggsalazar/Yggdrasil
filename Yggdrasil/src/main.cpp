@@ -20,9 +20,10 @@ int main() {
 
 	// Create window with SDL_Renderer graphics context
 	float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay()); //Look up what this is doing later
+	ImVec2 resolution(1600, 900);
 	SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 	//SDL_Window* window = SDL_CreateWindow("Yggdrasil", (int)(1280 * main_scale), (int)(720 * main_scale), window_flags);
-	SDL_Window* window = SDL_CreateWindow("Yggdrasil", 1600, 900, window_flags);
+	SDL_Window* window = SDL_CreateWindow("Yggdrasil", resolution.x, resolution.y, window_flags);
 	if (!window) {
 		printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
 		return -1;
@@ -51,22 +52,33 @@ int main() {
 
 	bool app_running = true;
 	ImVec4 clear_color = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+	float padding = 10.f;
+
+	//Set the "New Trunk" button position
+	ImVec2 button_size(100, 30);
+	ImVec2 pos = resolution;
+	pos.x -= button_size.x + padding;
+	pos.y -= button_size.y + padding;
+
 	int trunks_open = 0;
+	char trunk_name[128] = "";
 	vector<string> trunk_names;
 
 	while (app_running) {
 		//Poll events
-		SDL_Event event;
-		while (SDL_PollEvent(&event)) {
-			ImGui_ImplSDL3_ProcessEvent(&event);
-			if (event.type == SDL_EVENT_QUIT)
-				app_running = false;
-			if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
-				app_running = false;
-		}
-		if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
-			SDL_Delay(10);
-			continue;
+		{
+			SDL_Event event;
+			while (SDL_PollEvent(&event)) {
+				ImGui_ImplSDL3_ProcessEvent(&event);
+				if (event.type == SDL_EVENT_QUIT)
+					app_running = false;
+				if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
+					app_running = false;
+			}
+			if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
+				SDL_Delay(10);
+				continue;
+			}
 		}
 
 		//Start the Dear ImGui frame
@@ -74,14 +86,53 @@ int main() {
 		ImGui_ImplSDL3_NewFrame();
 		ImGui::NewFrame();
 		
-		//Create a new trunk
-		if (ImGui::Button("New Trunk")) {
-			++trunks_open;
-			string new_name = "";
-			cin >> new_name;
+		//New Trunk creation
+		{
+			ImGui::SetNextWindowPos(pos);
+			ImGui::SetNextWindowSize(button_size);
+			//Make invisible window that just contains the new_trunk button
+			ImGui::Begin("Invisible", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar
+											 | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings  | ImGuiWindowFlags_NoBackground);
+			ImGui::SetCursorScreenPos(pos);
+			if (ImGui::Button("New Trunk", button_size)) {
+				for (int c = 0; c < 128; ++c)
+					trunk_name[c] = '\0';
+				ImGui::OpenPopup("New Trunk");
+			}
 
-			trunk_names.push_back(new_name);
+			if (ImGui::BeginPopupModal("New Trunk", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+				ImGui::Text("Enter Character name:");
+
+				//Text input field
+				ImGui::InputText("Character Name", trunk_name, IM_ARRAYSIZE(trunk_name));
+
+				if (ImGui::Button("Done") or ImGui::IsKeyPressed(ImGuiKey_Enter) or ImGui::IsKeyPressed(ImGuiKey_KeypadEnter)) {
+					if (trunk_name[0] == '\0') {
+						ImGui::SetNextWindowPos(ImVec2(resolution.x*.5-150, resolution.y*.5-75), ImGuiCond_Always);
+						ImGui::OpenPopup("Trunk Error!");
+					}
+					else {
+						ImGui::CloseCurrentPopup();
+						++trunks_open;
+						string new_name = trunk_name;
+						trunk_names.push_back(new_name);
+					}
+				}
+
+				ImGui::SetNextWindowSize(ImVec2(300, 150), ImGuiCond_Always);
+				if (ImGui::BeginPopup("Trunk Error!")) {
+					//SetCursorPos is relative to current window
+					ImGui::SetCursorPos(ImVec2(60, 64));
+					ImGui::Text("Character must have a name!");
+					ImGui::EndPopup();
+				}
+
+				ImGui::EndPopup();
+			}
+			ImGui::End();
 		}
+		//eo New Trunk creation
+
 
 		for (int t = 0; t < trunks_open; ++t) {
 			ImGui::Begin(trunk_names[t].c_str());
@@ -101,6 +152,7 @@ int main() {
 
 			ImGui::End();
 		}
+		
 
 		// Rendering
 		ImGui::Render();
