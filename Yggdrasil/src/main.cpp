@@ -54,8 +54,6 @@ int main() {
 	int trunks_open = 0;
 	vector<string> trunk_names;
 
-	bool export_error = false;
-
 	while (app_running) {
 		//Poll events
 		SDL_Event event;
@@ -66,7 +64,6 @@ int main() {
 			if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
 				app_running = false;
 		}
-
 		if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
 			SDL_Delay(10);
 			continue;
@@ -77,42 +74,33 @@ int main() {
 		ImGui_ImplSDL3_NewFrame();
 		ImGui::NewFrame();
 		
+		//Create a new trunk
 		if (ImGui::Button("New Trunk")) {
 			++trunks_open;
-			string new_name = "[Character Name]";
-			if (trunks_open > 1)
-				new_name += to_string(trunks_open);
+			string new_name = "";
+			cin >> new_name;
 
 			trunk_names.push_back(new_name);
-			cout << trunks_open << "\n";
 		}
 
 		for (int t = 0; t < trunks_open; ++t) {
 			ImGui::Begin(trunk_names[t].c_str());
 
+			//Export
 			if (ImGui::Button("Export")) {
-
-				if (trunk_names[t] == "[Character Name]")
-					export_error = true;
-				else {
-					json test;
-					ofstream out(trunk_names[t] + "_dialogue.json");
-					out << setw(4) << test << endl;
-					out.close();
-				}
+				json j;
+				ofstream out(trunk_names[t] + "_dialogue.json");
+				out << setw(4) << j << endl;
+				out.close();
 			}
 
-			if (export_error) ImGui::BeginPopup("Error! Character must have a name!");
+			//New Branch
+			if (ImGui::Button("New Branch")) {
+
+			}
 
 			ImGui::End();
 		}
-		//ImGui::Begin("[Character Name]");
-
-		
-
-
-
-		//ImGui::End();
 
 		// Rendering
 		ImGui::Render();

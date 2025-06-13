@@ -1,8 +1,13 @@
 New Trunk button
+	-When clicked, create popup that prompts you to enter character's name
+	-Place in permanent bottom right
+		--How to set size?
+	-How to set size and location?
 
 New Branch button
+	-When clicked, create popup that prompts you to enter branch name
 
-New Stem button
+New Stem button (dropdown)
 	-Can be Texts or Choices
 
 New Leaf button
@@ -52,8 +57,10 @@ New Leaf button
 			---Index must be an included effect for every Choice!
 
 Save/Export Trunk Button
-	-Include check to make sure character name is set (does not begin with [ or end with ])
+	-Include check to make sure character name is set (contains "[Character Name]")
+
+Load/Import Trunk button
 
 Arrows showing which choice directs to which branch
 
-Camera? Camera for forest and camera for trunk?
+Cameras? Camera for forest and camera for trunk?
