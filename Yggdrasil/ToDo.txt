@@ -1,0 +1,59 @@
+New Trunk button
+
+New Branch button
+
+New Stem button
+	-Can be Texts or Choices
+
+New Leaf button
+	-If Stem is Texts:
+		--Text
+			---String
+		--Condition (optional)
+			---Check
+				----String dropdown
+					-----Aeons, Disposition, flags?, Race, Class, Background
+			---Value
+				----Float
+					-----1 or 2 values
+			---Comparison
+				----Symbol dropdown
+					----->, >=, ==, <, <=
+					-----Exports to string (G, GE, E, L, LE respectively)
+				----Not settable if Value is 2 values
+					
+	-If Stem is Choices:
+		--Text
+			---String
+		--Condition (optional)
+			---Check
+				----String dropdown
+					-----Aeons, Disposition, flags?, Race, Class, Background
+			---Value
+				----Float
+					-----1 or 2 values
+			---Comparison
+				----Symbol dropdown
+					----->, >=, ==, <, <=
+					-----Exports to string (G, GE, E, L, LE respectively)
+				----Not settable if Value is 2 values
+		--Check (optional)
+			---Stat
+				----String dropdown
+					-----Ability scores & skills
+			---DR
+				----Float
+		--Effects
+			---Effect
+				----String dropdown
+					-----Index, Disposition, Aeons, Jump, Item
+			---Value
+				----Float or String
+			---Index must be an included effect for every Choice!
+
+Save/Export Trunk Button
+	-Include check to make sure character name is set (does not begin with [ or end with ])
+
+Arrows showing which choice directs to which branch
+
+Camera? Camera for forest and camera for trunk?
