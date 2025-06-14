@@ -52,7 +52,10 @@ int main() {
 
 	bool app_running = true;
 	ImVec4 clear_color = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+	
+	//Misc. variables
 	float padding = 10.f;
+	float error_text_y = 66;
 
 	//Set the "New Trunk" button position
 	ImVec2 button_size(100, 30);
@@ -60,11 +63,19 @@ int main() {
 	pos.x -= button_size.x + padding;
 	pos.y -= button_size.y + padding;
 
+	//Trunk variables
 	int trunks_open = 0;
 	char trunk_name[128] = "";
 	vector<string> trunk_names;
 
+	//Branch variables
+	char branch_name[128] = "";
+
+
 	while (app_running) {
+		//Get size of window
+		resolution = ImGui::GetIO().DisplaySize;
+
 		//Poll events
 		{
 			SDL_Event event;
@@ -86,8 +97,11 @@ int main() {
 		ImGui_ImplSDL3_NewFrame();
 		ImGui::NewFrame();
 		
-		//New Trunk creation
+		//New Trunk
 		{
+			//Set button position
+			pos.x = resolution.x - (button_size.x + padding);
+			pos.y = resolution.y - (button_size.y + padding);
 			ImGui::SetNextWindowPos(pos);
 			ImGui::SetNextWindowSize(button_size);
 			//Make invisible window that just contains the new_trunk button
@@ -106,11 +120,10 @@ int main() {
 				//Text input field
 				ImGui::InputText("Character Name", trunk_name, IM_ARRAYSIZE(trunk_name));
 
+				//Trunk name validation
 				if (ImGui::Button("Done") or ImGui::IsKeyPressed(ImGuiKey_Enter) or ImGui::IsKeyPressed(ImGuiKey_KeypadEnter)) {
-					if (trunk_name[0] == '\0') {
-						ImGui::SetNextWindowPos(ImVec2(resolution.x*.5-150, resolution.y*.5-75), ImGuiCond_Always);
+					if (trunk_name[0] == '\0')
 						ImGui::OpenPopup("Trunk Error!");
-					}
 					else {
 						ImGui::CloseCurrentPopup();
 						++trunks_open;
@@ -119,10 +132,16 @@ int main() {
 					}
 				}
 
+				//Cancel
+				ImGui::SetCursorPos(ImVec2(100, ImGui::GetWindowSize().y - 26));
+				if (ImGui::Button("Cancel"))
+					ImGui::CloseCurrentPopup();
+
+				ImGui::SetNextWindowPos(ImVec2(resolution.x * .5 - 150, resolution.y * .5 - 75), ImGuiCond_Always);
 				ImGui::SetNextWindowSize(ImVec2(300, 150), ImGuiCond_Always);
 				if (ImGui::BeginPopup("Trunk Error!")) {
 					//SetCursorPos is relative to current window
-					ImGui::SetCursorPos(ImVec2(60, 64));
+					ImGui::SetCursorPos(ImVec2(60, error_text_y));
 					ImGui::Text("Character must have a name!");
 					ImGui::EndPopup();
 				}
@@ -131,28 +150,86 @@ int main() {
 			}
 			ImGui::End();
 		}
-		//eo New Trunk creation
+		//eo New Trunk
 
+		//Trunk editing
+		{
+			for (int t = 0; t < trunks_open; ++t) {
+				ImGui::SetNextWindowPos(ImVec2(150, 100), ImGuiCond_Appearing);
+				ImGui::SetNextWindowSize(ImVec2(600, 500), ImGuiCond_Appearing);
+				ImGui::Begin(trunk_names[t].c_str());
 
-		for (int t = 0; t < trunks_open; ++t) {
-			ImGui::Begin(trunk_names[t].c_str());
+				//New Branch
+				{
+					if (ImGui::Button("New Branch")) {
+						ImGui::OpenPopup("New Branch");
+						for (int c = 0; c < 128; ++c)
+							branch_name[c] = '\0';
+					}
 
-			//Export
-			if (ImGui::Button("Export")) {
-				json j;
-				ofstream out(trunk_names[t] + "_dialogue.json");
-				out << setw(4) << j << endl;
-				out.close();
+					if (ImGui::BeginPopupModal("New Branch", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+						ImGui::Text("Enter Branch name:");
+
+						//Text input field
+						ImGui::InputText("Branch Name", branch_name, IM_ARRAYSIZE(branch_name));
+
+						//Branch name validation
+						if (ImGui::Button("Done") or ImGui::IsKeyPressed(ImGuiKey_Enter) or ImGui::IsKeyPressed(ImGuiKey_KeypadEnter)) {
+							if (branch_name[0] == '\0')
+								ImGui::OpenPopup("Branch Error!");
+							else {
+								ImGui::CloseCurrentPopup();
+								//++trunks_open;
+								//string new_name = trunk_name;
+								//trunk_names.push_back(new_name);
+							}
+						}
+
+						ImGui::SetNextWindowPos(ImVec2(resolution.x * .5 - 150, resolution.y * .5 - 75), ImGuiCond_Always);
+						ImGui::SetNextWindowSize(ImVec2(300, 150), ImGuiCond_Always);
+						if (ImGui::BeginPopup("Branch Error!")) {
+							//SetCursorPos is relative to current window
+							ImGui::SetCursorPos(ImVec2(66, error_text_y));
+							ImGui::Text("Branch must have a name!");
+							ImGui::EndPopup();
+						}
+
+						ImGui::EndPopup();
+					}
+				}
+				
+				
+				
+				
+				//Exporting
+				{
+					ImVec2 trunk_size = ImGui::GetWindowSize();
+					ImGui::SetCursorPos(ImVec2(trunk_size.x - (button_size.x*.6f), trunk_size.y - button_size.y));
+					if (ImGui::Button("Export")) {
+						json j;
+						ofstream out(trunk_names[t] + "_dialogue.json");
+						out << setw(4) << j << endl;
+						out.close();
+
+						//Success popup open
+						ImGui::OpenPopup("Export Successful!");
+					}
+
+					//Successful Export Popup
+					ImGui::SetNextWindowPos(ImVec2(resolution.x * .5 - 150, resolution.y * .5 - 75), ImGuiCond_Always);
+					ImGui::SetNextWindowSize(ImVec2(300, 150), ImGuiCond_Always);
+					if (ImGui::BeginPopup("Export Successful!")) {
+						//SetCursorPos is relative to current window
+						ImGui::SetCursorPos(ImVec2(86, 64));
+						ImGui::Text("Export Successful!");
+						ImGui::EndPopup();
+					}
+				}
+
+				ImGui::End();
 			}
-
-			//New Branch
-			if (ImGui::Button("New Branch")) {
-
-			}
-
-			ImGui::End();
 		}
-		
+		//eo Trunk editing
 
 		// Rendering
 		ImGui::Render();
