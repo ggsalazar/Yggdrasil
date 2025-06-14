@@ -1,9 +1,3 @@
-New Trunk button
-	-When clicked, create popup that prompts you to enter character's name
-	-Place in permanent bottom right
-		--How to set size?
-	-How to set size and location?
-
 New Branch button
 	-When clicked, create popup that prompts you to enter branch name
 
