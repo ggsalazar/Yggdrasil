@@ -1,6 +1,3 @@
-New Branch button
-	-When clicked, create popup that prompts you to enter branch name
-
 New Stem button (dropdown)
 	-Can be Texts or Choices
 

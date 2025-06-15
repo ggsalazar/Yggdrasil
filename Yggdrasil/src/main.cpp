@@ -1,8 +1,10 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
+#include <unordered_map>
 #include <SDL3/SDL.h>
 #include "../packages/imgui/imgui.h"
+#include "../packages/imgui/imgui_internal.h"
 #include "../packages/imgui/imgui_impl_sdl3.h"
 #include "../packages/imgui/imgui_impl_sdlrenderer3.h"
 #include "../packages/json-3.12.0/single_include/nlohmann/json.hpp"
@@ -19,11 +21,10 @@ int main() {
 	}
 
 	// Create window with SDL_Renderer graphics context
-	float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay()); //Look up what this is doing later
+	float scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay()); //Look up what this is doing later
 	ImVec2 resolution(1600, 900);
 	SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
-	//SDL_Window* window = SDL_CreateWindow("Yggdrasil", (int)(1280 * main_scale), (int)(720 * main_scale), window_flags);
-	SDL_Window* window = SDL_CreateWindow("Yggdrasil", resolution.x, resolution.y, window_flags);
+	SDL_Window* window = SDL_CreateWindow("Yggdrasil", (int)(resolution.x * scale), (int)(resolution.y * scale), window_flags);
 	if (!window) {
 		printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
 		return -1;
@@ -38,7 +39,7 @@ int main() {
 	SDL_ShowWindow(window);
 
 
-
+	//ImGui setup
 	ImGuiContext* imgui_context = ImGui::CreateContext();
 	ImGui::SetCurrentContext(imgui_context);
 
@@ -52,7 +53,7 @@ int main() {
 
 	bool app_running = true;
 	ImVec4 clear_color = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
-	
+
 	//Misc. variables
 	float padding = 10.f;
 	float error_text_y = 66;
@@ -69,11 +70,22 @@ int main() {
 	vector<string> trunk_names;
 
 	//Branch variables
+	int branches_open = 0;
 	char branch_name[128] = "";
+	vector<string> branch_names;
+	vector<ImVec2> branch_posits;
+	//Key is branch name, value is trunk name; multiple branches can have only one owner
+	unordered_map<string, string> branch_owners;
+
+	//Stem variables
+	static const char* stem_options[] = {"Texts", "Choices"};
+	static int current_stem = 0;
+
+	//Leaf variables
 
 
 	while (app_running) {
-		//Get size of window
+		//Get size of application window
 		resolution = ImGui::GetIO().DisplaySize;
 
 		//Poll events
@@ -133,7 +145,7 @@ int main() {
 				}
 
 				//Cancel
-				ImGui::SetCursorPos(ImVec2(100, ImGui::GetWindowSize().y - 26));
+				ImGui::SetCursorPos(ImVec2(ImGui::GetWindowSize().x - 58, ImGui::GetWindowSize().y - 27));
 				if (ImGui::Button("Cancel"))
 					ImGui::CloseCurrentPopup();
 
@@ -152,12 +164,14 @@ int main() {
 		}
 		//eo New Trunk
 
-		//Trunk editing
+		//Trunk stuff
 		{
 			for (int t = 0; t < trunks_open; ++t) {
+				//Set trunk position & size
 				ImGui::SetNextWindowPos(ImVec2(150, 100), ImGuiCond_Appearing);
-				ImGui::SetNextWindowSize(ImVec2(600, 500), ImGuiCond_Appearing);
+				ImGui::SetNextWindowSize(ImVec2(900, 700), ImGuiCond_Appearing);
 				ImGui::Begin(trunk_names[t].c_str());
+
 
 				//New Branch
 				{
@@ -179,11 +193,21 @@ int main() {
 								ImGui::OpenPopup("Branch Error!");
 							else {
 								ImGui::CloseCurrentPopup();
-								//++trunks_open;
-								//string new_name = trunk_name;
-								//trunk_names.push_back(new_name);
+								++branches_open;
+								string new_name = branch_name;
+								branch_names.push_back(new_name);
+								branch_posits.push_back(ImVec2(ImGui::GetWindowPos().x + 30, ImGui::GetWindowPos().y+30));
+
+								//This trunk owns this branch
+								branch_owners[new_name] = trunk_names[t];
 							}
 						}
+
+						//Cancel
+						ImGui::SetCursorPos(ImVec2(ImGui::GetWindowSize().x - 58, ImGui::GetWindowSize().y - 27));
+						if (ImGui::Button("Cancel"))
+							ImGui::CloseCurrentPopup();
+
 
 						ImGui::SetNextWindowPos(ImVec2(resolution.x * .5 - 150, resolution.y * .5 - 75), ImGuiCond_Always);
 						ImGui::SetNextWindowSize(ImVec2(300, 150), ImGuiCond_Always);
@@ -197,9 +221,6 @@ int main() {
 						ImGui::EndPopup();
 					}
 				}
-				
-				
-				
 				
 				//Exporting
 				{
@@ -229,12 +250,62 @@ int main() {
 				ImGui::End();
 			}
 		}
-		//eo Trunk editing
+		//eo Trunk stuff
+
+
+
+
+		//Branch editing
+		{
+			for (int b = 0; b < branches_open; ++b) {
+				//Set branch position & size
+				ImGui::SetNextWindowPos(branch_posits[b], ImGuiCond_Appearing);
+				ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_Appearing);
+				ImGui::Begin(branch_names[b].c_str());
+				ImGui::SetWindowFocus();
+				branch_posits[b] = ImGui::GetWindowPos();
+
+				//Branches cannot leave the confines of their trunks
+				//Get a pointer to the owning trunk
+				ImGuiWindow* owner = ImGui::FindWindowByName(branch_owners[branch_names[b]].c_str());
+				if (owner and owner->WasActive) {
+					//x
+					if (branch_posits[b].x < owner->Pos.x) branch_posits[b].x = owner->Pos.x;
+					else if (branch_posits[b].x + ImGui::GetWindowSize().x > owner->Pos.x + owner->Size.x) branch_posits[b].x = owner->Pos.x + owner->Size.x - ImGui::GetWindowSize().x;
+					//y
+					if (branch_posits[b].y < owner->Pos.y) branch_posits[b].y = owner->Pos.y;
+					else if (branch_posits[b].y + ImGui::GetWindowSize().y > owner->Pos.y + owner->Size.y) branch_posits[b].y = owner->Pos.y + owner->Size.y - ImGui::GetWindowSize().y;
+				}
+				ImGui::SetWindowPos(branch_posits[b], ImGuiCond_Always);
+
+
+
+				//Create a new stem
+				if (ImGui::BeginCombo("New Stem", stem_options[0])) {
+					for (int s = 0; s < IM_ARRAYSIZE(stem_options); ++s) {
+						bool is_selected = current_stem == s;
+						if (ImGui::Selectable(stem_options[s], is_selected)) current_stem = s;
+
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
+
+					ImGui::EndCombo();
+				}
+				
+
+				ImGui::End();
+			}
+		}
+
+
+
+
 
 		// Rendering
 		ImGui::Render();
-		SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y); //What is this doing?
-		SDL_SetRenderDrawColorFloat(renderer, clear_color.x, clear_color.y, clear_color.z, clear_color.w); //What is this doing?
+		SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+		SDL_SetRenderDrawColorFloat(renderer, clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 		SDL_RenderClear(renderer);
 		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
 		SDL_RenderPresent(renderer);
