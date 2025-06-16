@@ -1,3 +1,6 @@
+Need to find a way to keep windows on their proper layers - clicking on a trunk shouldn't make branches (and 
+the like) unselectable
+
 New Stem button (dropdown)
 	-Can be Texts or Choices
 

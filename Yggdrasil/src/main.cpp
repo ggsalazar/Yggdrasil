@@ -22,7 +22,8 @@ int main() {
 
 	// Create window with SDL_Renderer graphics context
 	float scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay()); //Look up what this is doing later
-	ImVec2 resolution(1600, 900);
+	//ImVec2 resolution(1280, 720);
+	ImVec2 resolution(1072, 603);
 	SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 	SDL_Window* window = SDL_CreateWindow("Yggdrasil", (int)(resolution.x * scale), (int)(resolution.y * scale), window_flags);
 	if (!window) {
@@ -65,21 +66,27 @@ int main() {
 	pos.y -= button_size.y + padding;
 
 	//Trunk variables
-	int trunks_open = 0;
-	char trunk_name[128] = "";
+	static int trunks_open = 0;
+	static char trunk_name[128] = "";
 	vector<string> trunk_names;
 
 	//Branch variables
-	int branches_open = 0;
-	char branch_name[128] = "";
+	static int branches_open = 0;
+	static char branch_name[128] = "";
 	vector<string> branch_names;
 	vector<ImVec2> branch_posits;
-	//Key is branch name, value is trunk name; multiple branches can have only one owner
+	//Key is branch name, value is trunk name
 	unordered_map<string, string> branch_owners;
+	vector<vector<int>> branch_stems;
 
 	//Stem variables
 	static const char* stem_options[] = {"Texts", "Choices"};
 	static int current_stem = 0;
+	static int stems_open = 0;
+	vector<string> stems;
+	vector<ImVec2> stem_posits;
+	//Key is stem index, value is branch name
+	unordered_map<string, string> stem_owners;
 
 	//Leaf variables
 
@@ -252,9 +259,6 @@ int main() {
 		}
 		//eo Trunk stuff
 
-
-
-
 		//Branch editing
 		{
 			for (int b = 0; b < branches_open; ++b) {
@@ -262,7 +266,7 @@ int main() {
 				ImGui::SetNextWindowPos(branch_posits[b], ImGuiCond_Appearing);
 				ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_Appearing);
 				ImGui::Begin(branch_names[b].c_str());
-				ImGui::SetWindowFocus();
+				//ImGui::SetWindowFocus();
 				branch_posits[b] = ImGui::GetWindowPos();
 
 				//Branches cannot leave the confines of their trunks
@@ -278,27 +282,53 @@ int main() {
 				}
 				ImGui::SetWindowPos(branch_posits[b], ImGuiCond_Always);
 
+				//New stem
+				{
+					if (ImGui::Button("New Stem"))
+						ImGui::OpenPopup("New Stem");
 
 
-				//Create a new stem
-				if (ImGui::BeginCombo("New Stem", stem_options[0])) {
-					for (int s = 0; s < IM_ARRAYSIZE(stem_options); ++s) {
-						bool is_selected = current_stem == s;
-						if (ImGui::Selectable(stem_options[s], is_selected)) current_stem = s;
+					if (ImGui::BeginPopup("New Stem")) {
+						if (ImGui::BeginCombo("New Stem", stem_options[current_stem])) {
+							for (int s = 0; s < IM_ARRAYSIZE(stem_options); ++s) {
+								bool is_selected = current_stem == s;
+								if (ImGui::Selectable(stem_options[s], is_selected)) current_stem = s;
 
-						if (is_selected)
-							ImGui::SetItemDefaultFocus();
+								if (is_selected)
+									ImGui::SetItemDefaultFocus();
+							}
+
+							ImGui::EndCombo();
+						}
+
+						if (ImGui::Button("Create")) {
+							this_branch_stems
+							++stems_open;
+							//TO-DO
+						}
+
+
+						ImGui::EndPopup();
 					}
-
-					ImGui::EndCombo();
 				}
-				
+				//eo New Stem
 
 				ImGui::End();
 			}
 		}
+		//eo Branch editing
 
-
+		//Stems
+		{
+			for (int s = 0; s < stems_open; ++s) {
+				//Set branch position & size
+				ImGui::SetNextWindowPos(stem_posits[s], ImGuiCond_Appearing);
+				ImGui::SetNextWindowSize(ImVec2(200, 150), ImGuiCond_Appearing);
+				ImGui::Begin(stems[s].c_str());
+				//ImGui::SetWindowFocus();
+				stem_posits[s] = ImGui::GetWindowPos();
+			}
+		}
 
 
 
