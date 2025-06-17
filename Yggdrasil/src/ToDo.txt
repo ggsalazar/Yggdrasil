@@ -50,11 +50,6 @@ New Leaf button
 				----Float or String
 			---Index must be an included effect for every Choice!
 
-Save/Export Trunk Button
-	-Include check to make sure character name is set (contains "[Character Name]")
-
 Load/Import Trunk button
 
-Arrows showing which choice directs to which branch
-
-Cameras? Camera for forest and camera for trunk?
+Arrows showing which choice directs to which branch/stem

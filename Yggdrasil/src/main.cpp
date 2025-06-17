@@ -66,13 +66,13 @@ int main() {
 	pos.y -= button_size.y + padding;
 
 	//Trunk variables
-	static int trunks_open = 0;
-	static char trunk_name[128] = "";
+	int trunks_open = 0;
+	char trunk_name[128] = "";
 	vector<string> trunk_names;
 
 	//Branch variables
-	static int branches_open = 0;
-	static char branch_name[128] = "";
+	int branches_open = 0;
+	char branch_name[128] = "";
 	vector<string> branch_names;
 	vector<ImVec2> branch_posits;
 	//Key is branch name, value is trunk name
@@ -80,15 +80,19 @@ int main() {
 	vector<vector<int>> branch_stems;
 
 	//Stem variables
-	static const char* stem_options[] = {"Texts", "Choices"};
-	static int current_stem = 0;
-	static int stems_open = 0;
+	const char* stem_options[] = {"Texts", "Choices"};
+	int current_stem = 0;
+	int stems_open = 0;
+	vector<string> stem_texts;
 	vector<string> stems;
 	vector<ImVec2> stem_posits;
 	//Key is stem index, value is branch name
 	unordered_map<string, string> stem_owners;
 
 	//Leaf variables
+	const char* conditions[] = { "Aeons", "Disposition", "Item", "Race", "Class", "Background", "Quest"};
+	const char* comparisons[] = { ">=", ">", "==", "<=", "<" };
+	const char* effects[] = { "Index", "Aeons", "Disposition", "Jump", "Item" };
 
 
 	while (app_running) {
